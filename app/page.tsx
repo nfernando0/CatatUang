@@ -501,7 +501,7 @@ export default function Home() {
       case "profile":
         return "Profil Akun";
       default:
-        return "Ikhtisar Finansial";
+        return "Catatan Uang";
     }
   };
 
@@ -559,7 +559,7 @@ export default function Home() {
                         </span>
                       </div>
                       <p className="text-xs text-zinc-400 mt-1">
-                        Ikhtisar finansial harian Anda. {lastRefreshed ? `Sinkronisasi terakhir pukul ${lastRefreshed} WIB.` : ""}
+                        Catatan Uang harian Anda. {lastRefreshed ? `Sinkronisasi terakhir pukul ${lastRefreshed} WIB.` : ""}
                       </p>
                     </div>
 
@@ -1971,31 +1971,28 @@ export default function Home() {
                     <div className="flex items-center gap-1.5 self-start sm:self-auto overflow-x-auto w-full sm:w-auto">
                       <button
                         onClick={() => setCategoryFilterType("all")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${
-                          categoryFilterType === "all"
-                            ? "bg-zinc-800 text-zinc-100 font-semibold"
-                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${categoryFilterType === "all"
+                          ? "bg-zinc-800 text-zinc-100 font-semibold"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                          }`}
                       >
                         Semua ({categories.length})
                       </button>
                       <button
                         onClick={() => setCategoryFilterType("expense")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${
-                          categoryFilterType === "expense"
-                            ? "bg-rose-950/80 text-rose-300 font-semibold border border-rose-900/60"
-                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${categoryFilterType === "expense"
+                          ? "bg-rose-950/80 text-rose-300 font-semibold border border-rose-900/60"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                          }`}
                       >
                         Pengeluaran ({expenseCategoriesCount})
                       </button>
                       <button
                         onClick={() => setCategoryFilterType("income")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${
-                          categoryFilterType === "income"
-                            ? "bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-900/60"
-                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono transition ${categoryFilterType === "income"
+                          ? "bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-900/60"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                          }`}
                       >
                         Pemasukan ({incomeCategoriesCount})
                       </button>
@@ -2027,11 +2024,10 @@ export default function Home() {
                                   </h3>
                                 </div>
                                 <span
-                                  className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold uppercase flex-shrink-0 ${
-                                    isIncome
-                                      ? "bg-emerald-950/60 text-emerald-400 border border-emerald-900/60"
-                                      : "bg-rose-950/60 text-rose-400 border border-rose-900/60"
-                                  }`}
+                                  className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold uppercase flex-shrink-0 ${isIncome
+                                    ? "bg-emerald-950/60 text-emerald-400 border border-emerald-900/60"
+                                    : "bg-rose-950/60 text-rose-400 border border-rose-900/60"
+                                    }`}
                                 >
                                   {item.type}
                                 </span>
@@ -2050,9 +2046,8 @@ export default function Home() {
                                   Akumulasi Transaksi
                                 </span>
                                 <div
-                                  className={`text-base font-bold font-mono tracking-tight ${
-                                    isIncome ? "text-emerald-400" : "text-zinc-100"
-                                  }`}
+                                  className={`text-base font-bold font-mono tracking-tight ${isIncome ? "text-emerald-400" : "text-zinc-100"
+                                    }`}
                                 >
                                   {formatRupiah(usage.total)}
                                 </div>
@@ -2303,7 +2298,7 @@ export default function Home() {
 
         {/* Laravel Minimal Dashboard Footer */}
         <footer className="border-t border-zinc-800/80 px-6 py-3 text-xs font-mono text-zinc-500 flex flex-col sm:flex-row items-center justify-between gap-2 bg-[#09090b]">
-          <span>CatatUang • Sistem Manajemen Keuangan Personal (Laravel Style)</span>
+          <span>CatatUang • Sistem Manajemen Keuangan Personal</span>
           <span>Hak Cipta © 2026 CatatUang</span>
         </footer>
       </div>
