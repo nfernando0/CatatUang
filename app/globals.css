@@ -1,0 +1,438 @@
+@import "tailwindcss";
+
+:root {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --surface: #121215;
+  --surface-raised: #18181b;
+  --border: #27272a;
+  --border-subtle: #1f1f23;
+  --text-muted: #a1a1aa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+/* Enterprise Solid Surface & Crisp Borders */
+.enterprise-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.enterprise-card-raised {
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.enterprise-border {
+  border-color: var(--border);
+}
+
+.enterprise-border-subtle {
+  border-color: var(--border-subtle);
+}
+
+.enterprise-input {
+  background-color: #0d0d10;
+  border: 1px solid #27272a;
+  color: #f4f4f5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.enterprise-input:focus {
+  border-color: #52525b;
+  outline: none;
+  box-shadow: 0 0 0 1px #52525b;
+}
+
+/* Numeric tables with monospace figures */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clean minimal scrollbars for dense data */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* =========================================================
+   Light Mode Theme Overrides (Enterprise Laravel Light)
+   ========================================================= */
+html.light {
+  --background: #f8fafc;
+  --foreground: #09090b;
+  --surface: #ffffff;
+  --surface-raised: #f1f5f9;
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --text-muted: #64748b;
+  color-scheme: light;
+}
+
+html.light body,
+html.light body.text-slate-100 {
+  background-color: #f8fafc !important;
+  color: #09090b !important;
+}
+
+/* 1. Page, Main Canvas & Containers */
+html.light [class*="bg-[#09090b]"],
+html.light .bg-\[\#09090b\],
+html.light [class*="bg-[#0b0f19]"],
+html.light .bg-\[\#0b0f19\] {
+  background-color: #f8fafc !important;
+}
+
+/* 2. Top Header & Navbar (Translucent Glass White) */
+html.light header,
+html.light header[class*="bg-[#09090b]"],
+html.light header[class*="border-zinc-800"],
+html.light .sticky.top-0 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: #e2e8f0 !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* 3. Sidebar & Footer Panels */
+html.light aside,
+html.light [class*="bg-[#0d0d11]"],
+html.light [class*="bg-[#0a0a0d]"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light aside [class*="border-zinc-800"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* 4. Cards, Panels, Modals & Bento Surfaces */
+html.light [class*="bg-[#121216]"],
+html.light [class*="bg-[#121215]"],
+html.light [class*="bg-[#0e0e11]"],
+html.light .enterprise-card,
+html.light .enterprise-card-raised {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* 5. Inset Boxes, Inner Well & Input Backgrounds */
+html.light [class*="bg-[#09090b]"]:not(header):not(body):not(aside):not(.min-h-screen) {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light [class*="bg-[#0d0d10]"],
+html.light [class*="bg-zinc-900"],
+html.light [class*="bg-zinc-950"] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light [class*="bg-zinc-800"] {
+  background-color: #e2e8f0 !important;
+}
+
+html.light [class*="hover:bg-zinc-900"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html.light [class*="hover:bg-zinc-800"]:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* 6. All Borders & Dividers */
+html.light [class*="border-zinc-800"],
+html.light [class*="border-zinc-700"],
+html.light [class*="border-zinc-900"],
+html.light [class*="border-zinc-950"] {
+  border-color: #e2e8f0 !important;
+}
+
+html.light [class*="border-zinc-600"] {
+  border-color: #cbd5e1 !important;
+}
+
+html.light [class*="border-zinc-200"] {
+  border-color: #0f172a !important;
+}
+
+html.light [class*="divide-zinc-800"]> :not([hidden])~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* 7. Typography & Text Contrast */
+html.light [class*="text-zinc-100"] {
+  color: #09090b !important;
+}
+
+html.light [class*="text-zinc-200"] {
+  color: #18181b !important;
+}
+
+html.light [class*="text-zinc-300"] {
+  color: #27272a !important;
+}
+
+html.light [class*="text-zinc-400"] {
+  color: #475569 !important;
+}
+
+html.light [class*="text-zinc-500"] {
+  color: #64748b !important;
+}
+
+html.light [class*="text-slate-100"] {
+  color: #09090b !important;
+}
+
+html.light [class*="hover:text-white"]:hover,
+html.light [class*="hover:text-zinc-100"]:hover,
+html.light [class*="hover:text-zinc-200"]:hover {
+  color: #09090b !important;
+}
+
+/* 8. Colored Metric Cards & Status Badges (Soft Pastel Tint in Light Mode) */
+/* Blue */
+html.light [class*="bg-blue-950"] {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+html.light [class*="text-blue-400"],
+html.light [class*="text-blue-300"] {
+  color: #1d4ed8 !important;
+}
+
+html.light [class*="border-blue-900"] {
+  border-color: #bfdbfe !important;
+}
+
+/* Emerald / Green */
+html.light [class*="bg-emerald-950"] {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+html.light [class*="text-emerald-400"] {
+  color: #047857 !important;
+}
+
+html.light [class*="border-emerald-900"],
+html.light [class*="border-emerald-800"] {
+  border-color: #a7f3d0 !important;
+}
+
+/* Rose / Red */
+html.light [class*="bg-rose-950"] {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+html.light [class*="text-rose-400"],
+html.light [class*="text-rose-300"] {
+  color: #be123c !important;
+}
+
+html.light [class*="border-rose-900"],
+html.light [class*="border-rose-950"] {
+  border-color: #fecdd3 !important;
+}
+
+/* Purple / Violet */
+html.light [class*="bg-purple-950"] {
+  background-color: #faf5ff !important;
+  border-color: #e9d5ff !important;
+}
+
+html.light [class*="text-purple-400"],
+html.light [class*="text-purple-300"] {
+  color: #6d28d9 !important;
+}
+
+html.light [class*="border-purple-900"],
+html.light [class*="border-purple-800"] {
+  border-color: #e9d5ff !important;
+}
+
+/* Amber / Yellow */
+html.light [class*="bg-amber-950"] {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html.light [class*="text-amber-400"] {
+  color: #b45309 !important;
+}
+
+html.light [class*="border-amber-900"] {
+  border-color: #fde68a !important;
+}
+
+/* Cyan */
+html.light [class*="bg-cyan-950"] {
+  background-color: #ecfeff !important;
+  border-color: #a5f3fc !important;
+}
+
+html.light [class*="text-cyan-400"] {
+  color: #0e7490 !important;
+}
+
+html.light [class*="border-cyan-900"] {
+  border-color: #a5f3fc !important;
+}
+
+/* 9. Interactive Buttons */
+/* Primary Action Buttons */
+html.light [class*="bg-zinc-100"] {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+html.light [class*="hover:bg-white"]:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+html.light [class*="bg-zinc-100"] [class*="text-zinc-950"],
+html.light [class*="bg-zinc-100"] span {
+  color: #f8fafc !important;
+}
+
+html.light [class*="bg-zinc-100"] svg {
+  color: #f8fafc !important;
+}
+
+/* Secondary & Filter Buttons */
+html.light button[class*="bg-[#09090b]"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+html.light button[class*="bg-[#09090b]"]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Active Filter Pill */
+html.light button[class*="bg-zinc-800"] {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+/* 10. Form Inputs, Selects & Placeholders */
+html.light input,
+html.light select,
+html.light textarea,
+html.light .enterprise-input {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus,
+html.light .enterprise-input:focus {
+  border-color: #64748b !important;
+  box-shadow: 0 0 0 1px #64748b !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* 11. Data Tables */
+html.light thead,
+html.light thead th,
+html.light thead[class*="bg-[#09090b]"] {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light tbody tr {
+  border-color: #f1f5f9 !important;
+}
+
+html.light tbody tr:hover,
+html.light tbody tr[class*="hover:bg-zinc-900"]:hover {
+  background-color: #f8fafc !important;
+}
+
+/* 12. Modal Dialogs & Dropdown Menus */
+html.light .fixed.inset-0[class*="bg-black/75"],
+html.light .fixed.inset-0[class*="bg-black/70"] {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+html.light [id*="dropdown"],
+html.light [class*="shadow-xl"],
+html.light [class*="shadow-2xl"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* 13. Progress Bars & Track */
+html.light .rounded-full[class*="bg-zinc-900"] {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 14. Footer */
+html.light footer,
+html.light footer[class*="bg-[#09090b]"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+/* 15. Scrollbars */
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 16. Selection */
+html.light ::selection {
+  background-color: #bfdbfe !important;
+  color: #1e3a8a !important;
+}
