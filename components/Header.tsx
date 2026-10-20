@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import {
@@ -15,6 +15,9 @@ import {
   Moon,
 } from "lucide-react";
 import Link from "next/link";
+import { NotificationItem } from "@/lib/types";
+import { notificationService } from "@/services/notification.service";
+import NotificationDropdown from "./NotificationDropdown";
 
 interface HeaderProps {
   breadcrumbTitle?: string;
@@ -22,6 +25,15 @@ interface HeaderProps {
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
   onToggleSidebar?: () => void;
+  notifications?: NotificationItem[];
+  unreadCount?: number;
+  loadingNotifications?: boolean;
+  onMarkAsRead?: (id: number) => Promise<void>;
+  onMarkAllAsRead?: () => Promise<void>;
+  onDeleteNotification?: (id: number) => Promise<void>;
+  onClearReadNotifications?: () => Promise<void>;
+  onNavigateTab?: (tab: string) => void;
+  onOpenCreateNotificationModal?: () => void;
 }
 
 const emptySubscribe = () => () => { };
@@ -36,15 +48,107 @@ function getTodayFormatted() {
 }
 
 export default function Header({
-  breadcrumbTitle = "Pencatatan Pengeluaran",
+  breadcrumbTitle = "Catatan Uang",
   onOpenNewTx,
   searchQuery = "",
   onSearchChange,
   onToggleSidebar,
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
+  loadingNotifications: propLoadingNotifications,
+  onMarkAsRead: propOnMarkAsRead,
+  onMarkAllAsRead: propOnMarkAllAsRead,
+  onDeleteNotification: propOnDeleteNotification,
+  onClearReadNotifications: propOnClearReadNotifications,
+  onNavigateTab,
+  onOpenCreateNotificationModal,
 }: HeaderProps) {
-  const { user, logout, isLoading } = useAuth();
+  const { user, token, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+
+  // Fallback internal state if not provided as props
+  const [internalNotifications, setInternalNotifications] = useState<NotificationItem[]>([]);
+  const [internalUnreadCount, setInternalUnreadCount] = useState<number>(0);
+  const [internalLoading, setInternalLoading] = useState<boolean>(false);
+
+  const displayNotifications = propNotifications ?? internalNotifications;
+  const displayUnreadCount = propUnreadCount ?? internalUnreadCount;
+  const displayLoading = propLoadingNotifications ?? internalLoading;
+
+  // Fetch internal notifications if not supplied externally
+  useEffect(() => {
+    if (propNotifications === undefined && user) {
+      let isMounted = true;
+      const fetchNotifs = async () => {
+        try {
+          setInternalLoading(true);
+          const [notifRes, unread] = await Promise.all([
+            notificationService.getNotifications({ limit: 10 }, token || undefined),
+            notificationService.getUnreadCount(token || undefined),
+          ]);
+          if (isMounted) {
+            if (notifRes && notifRes.data) {
+              setInternalNotifications(notifRes.data);
+            }
+            setInternalUnreadCount(unread);
+          }
+        } catch {
+          // Ignore
+        } finally {
+          if (isMounted) setInternalLoading(false);
+        }
+      };
+
+      fetchNotifs();
+      const interval = setInterval(fetchNotifs, 30000); // 30s poll
+      return () => {
+        isMounted = false;
+        clearInterval(interval);
+      };
+    }
+  }, [propNotifications, user, token]);
+
+  const handleMarkAsRead = async (id: number) => {
+    if (propOnMarkAsRead) {
+      await propOnMarkAsRead(id);
+    } else {
+      await notificationService.markAsRead(id, token || undefined);
+      setInternalNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setInternalUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (propOnMarkAllAsRead) {
+      await propOnMarkAllAsRead();
+    } else {
+      await notificationService.markAllAsRead(token || undefined);
+      setInternalNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setInternalUnreadCount(0);
+    }
+  };
+
+  const handleDeleteNotification = async (id: number) => {
+    if (propOnDeleteNotification) {
+      await propOnDeleteNotification(id);
+    } else {
+      await notificationService.deleteNotification(id, token || undefined);
+      setInternalNotifications((prev) => prev.filter((n) => n.id !== id));
+    }
+  };
+
+  const handleClearRead = async () => {
+    if (propOnClearReadNotifications) {
+      await propOnClearReadNotifications();
+    } else {
+      await notificationService.deleteAll(true, token || undefined);
+      setInternalNotifications((prev) => prev.filter((n) => !n.is_read));
+    }
+  };
 
   // Today's formatted date in Indonesian (hydrated on client)
   const todayFormatted = React.useSyncExternalStore(
@@ -137,14 +241,48 @@ export default function Header({
           )}
         </button>
 
-        {/* Notification Bell */}
-        <button
-          title="Notifikasi"
-          className="relative rounded-md border border-zinc-800 bg-[#121216] p-1.5 text-zinc-400 hover:text-zinc-200 transition"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-blue-500" />
-        </button>
+        {/* Notification Bell with Live Interactive Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setNotificationOpen(!notificationOpen);
+              setDropdownOpen(false);
+            }}
+            id="header-notification-bell-btn"
+            title="Notifikasi"
+            aria-label="Buka Notifikasi"
+            className="relative rounded-md border border-zinc-800 bg-[#121216] p-1.5 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition focus:outline-none"
+          >
+            <Bell className="h-4 w-4" />
+            {displayUnreadCount > 0 ? (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-blue-500 text-[9px] font-mono font-bold text-white shadow-sm ring-2 ring-[#09090b] animate-in zoom-in">
+                {displayUnreadCount > 9 ? "9+" : displayUnreadCount}
+              </span>
+            ) : null}
+          </button>
+
+          <NotificationDropdown
+            isOpen={notificationOpen}
+            onClose={() => setNotificationOpen(false)}
+            notifications={displayNotifications}
+            unreadCount={displayUnreadCount}
+            isLoading={displayLoading}
+            onMarkAsRead={handleMarkAsRead}
+            onMarkAllAsRead={handleMarkAllAsRead}
+            onDeleteNotification={handleDeleteNotification}
+            onClearRead={handleClearRead}
+            onNavigateTab={onNavigateTab}
+            onOpenFullCenter={
+              onNavigateTab
+                ? () => {
+                    onNavigateTab("notifications");
+                    setNotificationOpen(false);
+                  }
+                : undefined
+            }
+            onOpenCreateModal={onOpenCreateNotificationModal}
+          />
+        </div>
 
         {/* User Dropdown or Guest Login */}
         {isLoading ? (
@@ -152,7 +290,10 @@ export default function Header({
         ) : user ? (
           <div className="relative">
             <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
+              onClick={() => {
+                setDropdownOpen(!dropdownOpen);
+                setNotificationOpen(false);
+              }}
               id="header-user-dropdown-btn"
               className="flex items-center gap-2 rounded-md border border-zinc-800 bg-[#121216] p-1.5 text-xs text-zinc-300 hover:border-zinc-700 transition"
             >

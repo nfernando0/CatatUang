@@ -107,6 +107,8 @@ export interface SingleTransactionApiResponse {
   status: "success" | "error";
   message?: string;
   data?: TransactionItem;
+  ai_budget_analysis?: AIBudgetAnalysis;
+  budget_alerts?: string[];
 }
 
 export interface TransactionsApiResponse {
@@ -248,4 +250,169 @@ export interface TransferPayload {
   to_wallet_id: number;
   amount: number;
   notes?: string;
+}
+
+export type NotificationType = "info" | "success" | "warning" | "danger";
+
+export interface NotificationItem {
+  id: number;
+  user_id?: number;
+  title: string;
+  message: string;
+  type: NotificationType;
+  category?: string;
+  is_read: boolean;
+  link?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface NotificationPaginationMeta {
+  current_page: number;
+  limit: number;
+  total_items: number;
+  total_pages: number;
+  unread_count?: number;
+}
+
+export interface NotificationsApiResponse {
+  status: "success" | "error";
+  message?: string;
+  data?: NotificationItem[];
+  meta?: NotificationPaginationMeta;
+  unread_count?: number;
+}
+
+export interface SingleNotificationApiResponse {
+  status: "success" | "error";
+  message?: string;
+  data?: NotificationItem;
+}
+
+export interface UnreadCountApiResponse {
+  status: "success" | "error";
+  message?: string;
+  unread_count: number;
+  data?: {
+    unread_count: number;
+  };
+}
+
+export interface CreateNotificationPayload {
+  title: string;
+  message: string;
+  type?: NotificationType;
+  category?: string;
+  link?: string;
+}
+
+export interface NotificationFilterParams {
+  page?: number;
+  limit?: number;
+  is_read?: boolean;
+  unread_only?: boolean;
+  type?: string;
+  category?: string;
+}
+
+// ==========================================
+// BUDGET TRACKER & AI GUARDIAN TYPES
+// ==========================================
+
+export type BudgetPeriod = "daily" | "weekly" | "monthly";
+export type BudgetStatus = "safe" | "warning" | "exceeded" | "not_set";
+
+export interface BudgetSummaryItem {
+  budget_id: number | null;
+  limit: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  is_exceeded: boolean;
+  status: BudgetStatus;
+  date?: string;
+  start_date?: string;
+  end_date?: string;
+  transactions_count: number;
+}
+
+export interface CategoryBudgetItem {
+  budget_id: number;
+  category_id: number;
+  category_name: string;
+  period: BudgetPeriod;
+  limit: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  is_exceeded: boolean;
+  status: BudgetStatus;
+}
+
+export interface AIBudgetAnalysis {
+  is_exceeded: boolean;
+  status: "safe" | "warning" | "danger";
+  period_impacted: "daily" | "weekly" | "both" | "none";
+  headline: string;
+  analysis: string;
+  advice: string;
+  smart_alert?: string;
+  source: string; // "gemini" | "fallback"
+}
+
+export interface BudgetTrackerData {
+  daily: BudgetSummaryItem;
+  weekly: BudgetSummaryItem;
+  category_budgets?: CategoryBudgetItem[];
+  alerts?: string[];
+  ai_analysis?: AIBudgetAnalysis;
+}
+
+export interface BudgetTrackerApiResponse {
+  status: "success" | "error";
+  message?: string;
+  data?: BudgetTrackerData;
+}
+
+export interface SetBudgetLimitsPayload {
+  daily_limit?: number;
+  weekly_limit?: number;
+}
+
+export interface CreateBudgetPayload {
+  period: BudgetPeriod;
+  amount: number;
+  category_id?: number | null;
+  category?: string;
+  description?: string;
+}
+
+export interface BudgetItem {
+  id: number;
+  user_id: number;
+  category_id?: number | null;
+  category?: string;
+  period: BudgetPeriod;
+  amount: number;
+  description?: string;
+  spent?: number;
+  remaining?: number;
+  percentage?: number;
+  is_exceeded?: boolean;
+  status?: BudgetStatus;
+  created_at?: string;
+  updated_at?: string;
+  category_data?: CategoryItem;
+}
+
+export interface BudgetsApiResponse {
+  status: "success" | "error";
+  message?: string;
+  data?: BudgetItem[];
+}
+
+export interface SingleBudgetApiResponse {
+  status: "success" | "error";
+  message?: string;
+  data?: BudgetItem;
 }

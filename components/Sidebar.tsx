@@ -17,6 +17,8 @@ import {
   LogIn,
   Plus,
   UserPlus,
+  Bell,
+  Target,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,6 +27,8 @@ interface SidebarProps {
   openNewTxModal?: () => void;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  unreadNotificationsCount?: number;
+  isBudgetExceeded?: boolean;
 }
 
 export default function Sidebar({
@@ -33,16 +37,20 @@ export default function Sidebar({
   openNewTxModal,
   isOpenMobile = false,
   onCloseMobile,
+  unreadNotificationsCount = 0,
+  isBudgetExceeded = false,
 }: SidebarProps) {
   const { user, logout, isLoading } = useAuth();
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "transactions", label: "Daftar Transaksi", icon: Receipt },
+    { id: "budget", label: "Budget Tracker", icon: Target },
     { id: "wallets", label: "Dompet & Rekening", icon: Wallet },
     { id: "savings", label: "Target Tabungan", icon: PiggyBank },
     { id: "reports", label: "Laporan & Rasio", icon: PieChart },
     { id: "categories", label: "Kategori Biaya", icon: Tag },
+    { id: "notifications", label: "Pusat Notifikasi", icon: Bell },
     { id: "profile", label: "Profil Akun", icon: User },
   ];
 
@@ -129,7 +137,19 @@ export default function Sidebar({
                       />
                       <span>{item.label}</span>
                     </div>
-                    {isActive && <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />}
+                    <div className="flex items-center gap-1.5">
+                      {item.id === "notifications" && unreadNotificationsCount > 0 && (
+                        <span className="rounded-full bg-blue-500/20 border border-blue-500/40 px-1.5 py-0.5 text-[10px] font-mono text-blue-400 font-semibold">
+                          {unreadNotificationsCount}
+                        </span>
+                      )}
+                      {item.id === "budget" && isBudgetExceeded && (
+                        <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-1.5 py-0.5 text-[9px] font-mono text-rose-400 font-bold animate-pulse">
+                          ALERT
+                        </span>
+                      )}
+                      {isActive && <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />}
+                    </div>
                   </button>
                 );
               })}

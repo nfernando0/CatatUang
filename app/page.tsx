@@ -10,6 +10,12 @@ import WalletModal from "@/components/WalletModal";
 import TransferModal from "@/components/TransferModal";
 import AdjustBalanceModal from "@/components/AdjustBalanceModal";
 import CategoryModal from "@/components/CategoryModal";
+import NotificationCenter from "@/components/NotificationCenter";
+import CreateNotificationModal from "@/components/CreateNotificationModal";
+import BudgetLimitsModal from "@/components/BudgetLimitsModal";
+import BudgetCategoryModal from "@/components/BudgetCategoryModal";
+import BudgetTrackerView from "@/components/BudgetTrackerView";
+import DashboardBudgetWidget from "@/components/DashboardBudgetWidget";
 import AuthForm from "@/components/AuthForm";
 import { useAuth } from "@/lib/auth-context";
 import { authService } from "@/services/auth.service";
@@ -17,6 +23,8 @@ import { transactionService } from "@/services/transaction.service";
 import { savingService } from "@/services/saving.service";
 import { walletService } from "@/services/wallet.service";
 import { categoryService } from "@/services/category.service";
+import { notificationService } from "@/services/notification.service";
+import { budgetService } from "@/services/budget.service";
 import {
   TransactionSummary,
   TransactionItem,
@@ -26,6 +34,10 @@ import {
   WalletMeta,
   WalletType,
   CategoryItem,
+  NotificationItem,
+  BudgetTrackerData,
+  BudgetItem,
+  AIBudgetAnalysis,
 } from "@/lib/types";
 import {
   DollarSign,
@@ -52,6 +64,7 @@ import {
   Banknote,
   Star,
   Tag,
+  X,
 } from "lucide-react";
 
 export default function Home() {
@@ -97,6 +110,26 @@ export default function Home() {
   const [categoryFilterType, setCategoryFilterType] = useState<"all" | "expense" | "income">("all");
   const [categorySearch, setCategorySearch] = useState<string>("");
 
+  // Notification States
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+  const [loadingNotifs, setLoadingNotifs] = useState<boolean>(false);
+  const [isCreateNotifModalOpen, setIsCreateNotifModalOpen] = useState<boolean>(false);
+
+  // Budget States
+  const [trackerData, setTrackerData] = useState<BudgetTrackerData | null>(null);
+  const [categoryBudgets, setCategoryBudgets] = useState<BudgetItem[]>([]);
+  const [loadingBudget, setLoadingBudget] = useState<boolean>(false);
+  const [loadingAI, setLoadingAI] = useState<boolean>(false);
+  const [isLimitsModalOpen, setIsLimitsModalOpen] = useState<boolean>(false);
+  const [isBudgetCategoryModalOpen, setIsBudgetCategoryModalOpen] = useState<boolean>(false);
+  const [budgetToEdit, setBudgetToEdit] = useState<BudgetItem | null>(null);
+  const [aiAlertBanner, setAiAlertBanner] = useState<{
+    headline: string;
+    advice: string;
+    status: string;
+  } | null>(null);
+
   // Filters & Search for Transactions
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
@@ -121,8 +154,12 @@ export default function Home() {
       savingService.getSavings(token).catch(() => null),
       walletService.getWallets(token).catch(() => null),
       categoryService.getCategories(token).catch(() => null),
+      notificationService.getNotifications({ limit: 50 }, token).catch(() => null),
+      notificationService.getUnreadCount(token).catch(() => 0),
+      budgetService.getTracker(undefined, token).catch(() => null),
+      budgetService.getBudgets(undefined, undefined, token).catch(() => null),
     ])
-      .then(([sumRes, transRes, savRes, walRes, catRes]) => {
+      .then(([sumRes, transRes, savRes, walRes, catRes, notifRes, unreadRes, budTrackerRes, budListRes]) => {
         if (!isMounted) return;
         if (sumRes?.data) setSummary(sumRes.data);
         if (transRes?.data) setTransactions(transRes.data);
@@ -136,6 +173,18 @@ export default function Home() {
         }
         if (catRes?.data) {
           setCategories(catRes.data);
+        }
+        if (notifRes?.data) {
+          setNotifications(notifRes.data);
+        }
+        if (typeof unreadRes === "number") {
+          setUnreadNotifCount(unreadRes);
+        }
+        if (budTrackerRes?.data) {
+          setTrackerData(budTrackerRes.data);
+        }
+        if (budListRes?.data) {
+          setCategoryBudgets(budListRes.data);
         }
         setLastRefreshed(
           new Date().toLocaleTimeString("id-ID", {
@@ -157,14 +206,19 @@ export default function Home() {
   const refreshData = () => {
     if (!token) return;
     setLoadingData(true);
+    setLoadingBudget(true);
     Promise.all([
       transactionService.getSummary(token).catch(() => null),
       transactionService.getTransactions(token, 100).catch(() => null),
       savingService.getSavings(token).catch(() => null),
       walletService.getWallets(token).catch(() => null),
       categoryService.getCategories(token).catch(() => null),
+      notificationService.getNotifications({ limit: 50 }, token).catch(() => null),
+      notificationService.getUnreadCount(token).catch(() => 0),
+      budgetService.getTracker(undefined, token).catch(() => null),
+      budgetService.getBudgets(undefined, undefined, token).catch(() => null),
     ])
-      .then(([sumRes, transRes, savRes, walRes, catRes]) => {
+      .then(([sumRes, transRes, savRes, walRes, catRes, notifRes, unreadRes, budTrackerRes, budListRes]) => {
         if (sumRes?.data) setSummary(sumRes.data);
         if (transRes?.data) setTransactions(transRes.data);
         if (savRes?.data) {
@@ -178,6 +232,18 @@ export default function Home() {
         if (catRes?.data) {
           setCategories(catRes.data);
         }
+        if (notifRes?.data) {
+          setNotifications(notifRes.data);
+        }
+        if (typeof unreadRes === "number") {
+          setUnreadNotifCount(unreadRes);
+        }
+        if (budTrackerRes?.data) {
+          setTrackerData(budTrackerRes.data);
+        }
+        if (budListRes?.data) {
+          setCategoryBudgets(budListRes.data);
+        }
         setLastRefreshed(
           new Date().toLocaleTimeString("id-ID", {
             hour: "2-digit",
@@ -188,11 +254,110 @@ export default function Home() {
       })
       .finally(() => {
         setLoadingData(false);
+        setLoadingBudget(false);
       });
   };
 
-  const handleTransactionSuccess = () => {
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      setLoadingNotifs(true);
+      const [notifRes, unread] = await Promise.all([
+        notificationService.getNotifications({ limit: 50 }, token),
+        notificationService.getUnreadCount(token),
+      ]);
+      if (notifRes?.data) {
+        setNotifications(notifRes.data);
+      }
+      setUnreadNotifCount(unread);
+    } catch {
+      // Ignore
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  const handleMarkNotifAsRead = async (id: number) => {
+    await notificationService.markAsRead(id, token || undefined);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+    );
+    setUnreadNotifCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleMarkAllNotifsAsRead = async () => {
+    await notificationService.markAllAsRead(token || undefined);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnreadNotifCount(0);
+  };
+
+  const handleDeleteNotif = async (id: number) => {
+    await notificationService.deleteNotification(id, token || undefined);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const unread = await notificationService.getUnreadCount(token || undefined);
+    setUnreadNotifCount(unread);
+  };
+
+  const handleClearReadNotifs = async () => {
+    await notificationService.deleteAll(true, token || undefined);
+    setNotifications((prev) => prev.filter((n) => !n.is_read));
+  };
+
+  const handleTransactionSuccess = (
+    aiAnalysis?: AIBudgetAnalysis,
+    budgetAlerts?: string[]
+  ) => {
     refreshData();
+    if (aiAnalysis && (aiAnalysis.is_exceeded || aiAnalysis.status !== "safe" || aiAnalysis.smart_alert)) {
+      setAiAlertBanner({
+        headline: aiAnalysis.headline || "Peringatan Batas Anggaran AI",
+        advice: aiAnalysis.smart_alert || aiAnalysis.advice,
+        status: aiAnalysis.status,
+      });
+    } else if (budgetAlerts && budgetAlerts.length > 0) {
+      setAiAlertBanner({
+        headline: "Peringatan Batas Anggaran",
+        advice: budgetAlerts.join(". "),
+        status: "warning",
+      });
+    }
+  };
+
+  const handleLimitsSuccess = (data?: BudgetTrackerData) => {
+    if (data) {
+      setTrackerData(data);
+    }
+    refreshData();
+  };
+
+  const handleCategoryBudgetSuccess = () => {
+    refreshData();
+  };
+
+  const handleDeleteCategoryBudget = async (id: number, name: string) => {
+    if (!token) return;
+    if (!window.confirm(`Hapus batas budget kategori "${name}"?`)) return;
+    try {
+      await budgetService.deleteBudget(id, token);
+      refreshData();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal menghapus budget.");
+    }
+  };
+
+  const fetchAITracker = async () => {
+    if (!token) return;
+    setLoadingAI(true);
+    try {
+      const res = await budgetService.getAITracker(undefined, token);
+      if (res.data) {
+        setTrackerData(res.data);
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal mengambil evaluasi AI.");
+    } finally {
+      setLoadingAI(false);
+    }
   };
 
   const handleSavingSuccess = () => {
@@ -490,6 +655,8 @@ export default function Home() {
     switch (currentTab) {
       case "transactions":
         return "Daftar Transaksi";
+      case "budget":
+        return "Budget Tracker & AI Guard";
       case "wallets":
         return "Dompet & Rekening";
       case "savings":
@@ -498,6 +665,8 @@ export default function Home() {
         return "Laporan & Rasio Keuangan";
       case "categories":
         return "Kategori Biaya";
+      case "notifications":
+        return "Pusat Notifikasi";
       case "profile":
         return "Profil Akun";
       default:
@@ -517,6 +686,8 @@ export default function Home() {
         openNewTxModal={() => setIsTxModalOpen(true)}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        unreadNotificationsCount={unreadNotifCount}
+        isBudgetExceeded={Boolean(trackerData?.daily?.is_exceeded || trackerData?.weekly?.is_exceeded)}
       />
 
       {/* Main Content Area */}
@@ -528,6 +699,15 @@ export default function Home() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          notifications={notifications}
+          unreadCount={unreadNotifCount}
+          loadingNotifications={loadingNotifs}
+          onMarkAsRead={handleMarkNotifAsRead}
+          onMarkAllAsRead={handleMarkAllNotifsAsRead}
+          onDeleteNotification={handleDeleteNotif}
+          onClearReadNotifications={handleClearReadNotifs}
+          onNavigateTab={(tab) => setCurrentTab(tab)}
+          onOpenCreateNotificationModal={() => setIsCreateNotifModalOpen(true)}
         />
 
         {/* Dashboard Main Canvas */}
@@ -547,6 +727,41 @@ export default function Home() {
               {/* TAB 1: DASHBOARD (OVERVIEW) */}
               {currentTab === "dashboard" && (
                 <div className="space-y-6">
+                  {/* AI Budget Alert Banner if triggered */}
+                  {aiAlertBanner && (
+                    <div
+                      className={`rounded-xl p-4 border flex items-start justify-between gap-3 shadow-lg animate-in fade-in slide-in-from-top-2 ${
+                        aiAlertBanner.status === "danger"
+                          ? "bg-rose-950/70 border-rose-800 text-rose-100"
+                          : aiAlertBanner.status === "warning"
+                          ? "bg-amber-950/70 border-amber-800 text-amber-100"
+                          : "bg-emerald-950/70 border-emerald-800 text-emerald-100"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1">
+                          <h4 className="text-xs sm:text-sm font-bold font-mono flex items-center gap-2">
+                            {aiAlertBanner.headline}
+                            <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-black/40 border border-white/10 uppercase">
+                              AI Evaluasi
+                            </span>
+                          </h4>
+                          <p className="text-xs leading-relaxed opacity-90">
+                            {aiAlertBanner.advice}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setAiAlertBanner(null)}
+                        className="p-1 rounded text-white/70 hover:text-white transition"
+                        title="Tutup Peringatan"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Top Welcome & Quick Actions Bar */}
                   <div className="rounded-lg border border-zinc-800 bg-[#121216] p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
@@ -664,6 +879,14 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+
+                  {/* AI Budget Guardian Mini Widget */}
+                  <DashboardBudgetWidget
+                    trackerData={trackerData}
+                    loading={loadingBudget}
+                    onNavigateToBudget={() => setCurrentTab("budget")}
+                    onOpenLimitsModal={() => setIsLimitsModalOpen(true)}
+                  />
 
                   {/* Main Grid: Recent Transactions Table & Financial Widgets */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -920,6 +1143,30 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* TAB: BUDGET TRACKER & AI FINANCIAL GUARD */}
+              {currentTab === "budget" && (
+                <BudgetTrackerView
+                  trackerData={trackerData}
+                  categoryBudgets={categoryBudgets}
+                  categories={categories}
+                  loading={loadingBudget}
+                  onRefresh={refreshData}
+                  onRefreshAI={fetchAITracker}
+                  loadingAI={loadingAI}
+                  onOpenLimitsModal={() => setIsLimitsModalOpen(true)}
+                  onOpenCreateCategoryBudget={() => {
+                    setBudgetToEdit(null);
+                    setIsBudgetCategoryModalOpen(true);
+                  }}
+                  onOpenEditCategoryBudget={(item) => {
+                    setBudgetToEdit(item);
+                    setIsBudgetCategoryModalOpen(true);
+                  }}
+                  onDeleteCategoryBudget={handleDeleteCategoryBudget}
+                  onOpenNewTxModal={() => setIsTxModalOpen(true)}
+                />
               )}
 
               {/* TAB 2: DAFTAR TRANSAKSI (FULL DATA TABLE) */}
@@ -2181,6 +2428,22 @@ export default function Home() {
                   </div>
                 </div>
               )}
+
+              {/* TAB 6: PUSAT NOTIFIKASI */}
+              {currentTab === "notifications" && (
+                <NotificationCenter
+                  notifications={notifications}
+                  unreadCount={unreadNotifCount}
+                  loading={loadingNotifs}
+                  onRefresh={fetchNotifications}
+                  onMarkAsRead={handleMarkNotifAsRead}
+                  onMarkAllAsRead={handleMarkAllNotifsAsRead}
+                  onDeleteNotification={handleDeleteNotif}
+                  onClearRead={handleClearReadNotifs}
+                  onOpenCreateModal={() => setIsCreateNotifModalOpen(true)}
+                  onNavigateTab={(tab) => setCurrentTab(tab)}
+                />
+              )}
             </>
           ) : (
             /* ======================================================== */
@@ -2372,6 +2635,36 @@ export default function Home() {
         }}
         onSuccess={handleCategorySuccess}
         categoryToEdit={categoryToEdit}
+      />
+
+      {/* Modal for Creating / Testing Notification */}
+      <CreateNotificationModal
+        isOpen={isCreateNotifModalOpen}
+        onClose={() => setIsCreateNotifModalOpen(false)}
+        onSuccess={() => {
+          fetchNotifications();
+        }}
+      />
+
+      {/* Modal for Setting Daily & Weekly Budget Limits */}
+      <BudgetLimitsModal
+        isOpen={isLimitsModalOpen}
+        onClose={() => setIsLimitsModalOpen(false)}
+        onSuccess={handleLimitsSuccess}
+        initialDailyLimit={trackerData?.daily?.limit || 0}
+        initialWeeklyLimit={trackerData?.weekly?.limit || 0}
+      />
+
+      {/* Modal for Creating / Editing Category Budget */}
+      <BudgetCategoryModal
+        isOpen={isBudgetCategoryModalOpen}
+        onClose={() => {
+          setIsBudgetCategoryModalOpen(false);
+          setBudgetToEdit(null);
+        }}
+        onSuccess={handleCategoryBudgetSuccess}
+        categories={categories}
+        budgetToEdit={budgetToEdit}
       />
     </div>
   );

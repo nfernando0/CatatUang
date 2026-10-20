@@ -20,6 +20,16 @@ import {
   SingleCategoryApiResponse,
   CreateCategoryPayload,
   UpdateCategoryPayload,
+  NotificationsApiResponse,
+  SingleNotificationApiResponse,
+  UnreadCountApiResponse,
+  CreateNotificationPayload,
+  NotificationFilterParams,
+  BudgetTrackerApiResponse,
+  SetBudgetLimitsPayload,
+  CreateBudgetPayload,
+  BudgetsApiResponse,
+  SingleBudgetApiResponse,
 } from "./types";
 
 export const TOKEN_STORAGE_KEY = "pengeluaran_auth_token";
@@ -471,6 +481,248 @@ export const authApi = {
   ): Promise<{ status: "success" | "error"; message?: string }> {
     return authRequest<{ status: "success" | "error"; message?: string }>(
       `/api/categories/${id}`,
+      { method: "DELETE" },
+      token
+    );
+  },
+
+  /**
+   * Get all notifications: GET /api/notifications
+   */
+  async getNotifications(
+    params?: NotificationFilterParams,
+    token?: string
+  ): Promise<NotificationsApiResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.unread_only) query.set("unread_only", "true");
+    if (params?.is_read !== undefined) query.set("is_read", String(params.is_read));
+    if (params?.type) query.set("type", params.type);
+    if (params?.category) query.set("category", params.category);
+
+    const queryString = query.toString();
+    const endpoint = queryString ? `/api/notifications?${queryString}` : "/api/notifications";
+    return authRequest<NotificationsApiResponse>(endpoint, { method: "GET" }, token);
+  },
+
+  /**
+   * Get unread notification count: GET /api/notifications/unread-count
+   */
+  async getUnreadNotificationCount(
+    token?: string
+  ): Promise<UnreadCountApiResponse> {
+    return authRequest<UnreadCountApiResponse>(
+      "/api/notifications/unread-count",
+      { method: "GET" },
+      token
+    );
+  },
+
+  /**
+   * Get notification by ID: GET /api/notifications/:id
+   */
+  async getNotificationById(
+    id: number,
+    token?: string
+  ): Promise<SingleNotificationApiResponse> {
+    return authRequest<SingleNotificationApiResponse>(
+      `/api/notifications/${id}`,
+      { method: "GET" },
+      token
+    );
+  },
+
+  /**
+   * Create custom notification: POST /api/notifications
+   */
+  async createNotification(
+    payload: CreateNotificationPayload,
+    token?: string
+  ): Promise<SingleNotificationApiResponse> {
+    return authRequest<SingleNotificationApiResponse>(
+      "/api/notifications",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      token
+    );
+  },
+
+  /**
+   * Mark single notification as read: PATCH /api/notifications/:id/read
+   */
+  async markNotificationAsRead(
+    id: number,
+    token?: string
+  ): Promise<SingleNotificationApiResponse> {
+    return authRequest<SingleNotificationApiResponse>(
+      `/api/notifications/${id}/read`,
+      { method: "PATCH" },
+      token
+    );
+  },
+
+  /**
+   * Mark all notifications as read: PATCH /api/notifications/read-all
+   */
+  async markAllNotificationsAsRead(
+    token?: string
+  ): Promise<{ status: "success" | "error"; message?: string; updated_count?: number }> {
+    return authRequest<{ status: "success" | "error"; message?: string; updated_count?: number }>(
+      "/api/notifications/read-all",
+      { method: "PATCH" },
+      token
+    );
+  },
+
+  /**
+   * Delete single notification: DELETE /api/notifications/:id
+   */
+  async deleteNotification(
+    id: number,
+    token?: string
+  ): Promise<{ status: "success" | "error"; message?: string }> {
+    return authRequest<{ status: "success" | "error"; message?: string }>(
+      `/api/notifications/${id}`,
+      { method: "DELETE" },
+      token
+    );
+  },
+
+  /**
+   * Delete all notifications: DELETE /api/notifications(?only_read=true)
+   */
+  async deleteAllNotifications(
+    onlyRead: boolean = false,
+    token?: string
+  ): Promise<{ status: "success" | "error"; message?: string; deleted_count?: number }> {
+    const endpoint = onlyRead ? "/api/notifications?only_read=true" : "/api/notifications";
+    return authRequest<{ status: "success" | "error"; message?: string; deleted_count?: number }>(
+      endpoint,
+      { method: "DELETE" },
+      token
+    );
+  },
+
+  // ==========================================
+  // BUDGET TRACKER & AI GUARDIAN APIS
+  // ==========================================
+
+  /**
+   * Get budget tracker summary (daily, weekly, and category status): GET /api/budgets/tracker(?date=YYYY-MM-DD)
+   */
+  async getBudgetTracker(
+    date?: string,
+    token?: string
+  ): Promise<BudgetTrackerApiResponse> {
+    const endpoint = date ? `/api/budgets/tracker?date=${encodeURIComponent(date)}` : "/api/budgets/tracker";
+    return authRequest<BudgetTrackerApiResponse>(endpoint, { method: "GET" }, token);
+  },
+
+  /**
+   * Get AI-powered budget tracker evaluation: GET /api/budgets/ai-tracker(?date=YYYY-MM-DD)
+   */
+  async getAIBudgetTracker(
+    date?: string,
+    token?: string
+  ): Promise<BudgetTrackerApiResponse> {
+    const endpoint = date ? `/api/budgets/ai-tracker?date=${encodeURIComponent(date)}` : "/api/budgets/ai-tracker";
+    return authRequest<BudgetTrackerApiResponse>(endpoint, { method: "GET" }, token);
+  },
+
+  /**
+   * Set quick daily and weekly budget limits: POST /api/budgets/limits
+   */
+  async setBudgetLimits(
+    payload: SetBudgetLimitsPayload,
+    token?: string
+  ): Promise<BudgetTrackerApiResponse> {
+    return authRequest<BudgetTrackerApiResponse>(
+      "/api/budgets/limits",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      token
+    );
+  },
+
+  /**
+   * Get all budgets (with optional period or date filter): GET /api/budgets
+   */
+  async getBudgets(
+    period?: string,
+    date?: string,
+    token?: string
+  ): Promise<BudgetsApiResponse> {
+    const params = new URLSearchParams();
+    if (period && period !== "all") params.append("period", period);
+    if (date) params.append("date", date);
+    const queryString = params.toString();
+    const endpoint = queryString ? `/api/budgets?${queryString}` : "/api/budgets";
+    return authRequest<BudgetsApiResponse>(endpoint, { method: "GET" }, token);
+  },
+
+  /**
+   * Get budget details by ID: GET /api/budgets/:id
+   */
+  async getBudgetById(
+    id: number,
+    token?: string
+  ): Promise<SingleBudgetApiResponse> {
+    return authRequest<SingleBudgetApiResponse>(
+      `/api/budgets/${id}`,
+      { method: "GET" },
+      token
+    );
+  },
+
+  /**
+   * Create new budget: POST /api/budgets
+   */
+  async createBudget(
+    payload: CreateBudgetPayload,
+    token?: string
+  ): Promise<SingleBudgetApiResponse> {
+    return authRequest<SingleBudgetApiResponse>(
+      "/api/budgets",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      token
+    );
+  },
+
+  /**
+   * Update budget: PUT /api/budgets/:id
+   */
+  async updateBudget(
+    id: number,
+    payload: Partial<CreateBudgetPayload>,
+    token?: string
+  ): Promise<SingleBudgetApiResponse> {
+    return authRequest<SingleBudgetApiResponse>(
+      `/api/budgets/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+      token
+    );
+  },
+
+  /**
+   * Delete budget: DELETE /api/budgets/:id
+   */
+  async deleteBudget(
+    id: number,
+    token?: string
+  ): Promise<{ status: "success" | "error"; message?: string }> {
+    return authRequest<{ status: "success" | "error"; message?: string }>(
+      `/api/budgets/${id}`,
       { method: "DELETE" },
       token
     );

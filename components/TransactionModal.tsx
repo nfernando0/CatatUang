@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { transactionService } from "@/services/transaction.service";
 import { categoryService, DEFAULT_CATEGORIES } from "@/services/category.service";
 import { walletService } from "@/services/wallet.service";
-import { CategoryItem, WalletItem } from "@/lib/types";
+import { CategoryItem, WalletItem, AIBudgetAnalysis } from "@/lib/types";
 import {
   X,
   Loader2,
@@ -20,7 +20,7 @@ import {
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (aiAnalysis?: AIBudgetAnalysis, budgetAlerts?: string[]) => void;
   initialType?: "expense" | "income";
 }
 
@@ -157,7 +157,7 @@ export default function TransactionModal({
 
     try {
       const finalDate = customDate || clientToday || new Date().toISOString().split("T")[0];
-      await transactionService.createTransaction(
+      const res = await transactionService.createTransaction(
         {
           type,
           amount: parsedAmount,
@@ -174,7 +174,7 @@ export default function TransactionModal({
       setAmount("");
       setDescription("");
       setCustomDate("");
-      onSuccess();
+      onSuccess(res?.ai_budget_analysis, res?.budget_alerts);
       onClose();
     } catch (err: unknown) {
       const msg =
